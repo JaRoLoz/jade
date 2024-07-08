@@ -46,7 +46,7 @@ impl DependencyNode {
             }
 
             let module_path = module_name.replace(FILE_SEPARATOR, "/");
-            let module_path = base_path.join(module_path).with_extension("lua");
+            let module_path = base_path.join(module_path).with_extension("lua");    
 
             if !module_path.exists() {
                 panic!("Module not found: {} ({})", module_name, module_path.display());

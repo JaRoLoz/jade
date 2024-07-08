@@ -3,12 +3,15 @@ use crate::logger;
 use crate::builder::build_step::BuildStep;
 use crate::bundler::bundle_step::BundleStep;
 use crate::js_builder::JSBuildStep;
+use crate::manifest_generator::ManifestGenerationStep;
 
 pub const BUILD_CONFIG_FILE: &str = "jade.json";
 
-pub struct BuildOptions {
+pub struct BuildOptions<'a> {
+    pub env: Option<&'a String>,
     pub bundle: bool,
-    pub js_build: bool
+    pub js_build: bool,
+    pub manifest: bool
 }
 
 #[derive(Debug)]
@@ -18,18 +21,24 @@ pub struct BuildConfig {
     steps: Vec<Box<dyn BuildStep>>
 }
 
-impl Default for BuildOptions {
+impl Default for BuildOptions<'_> {
     fn default() -> Self {
         BuildOptions {
+            env: None,
             bundle: true,
-            js_build: true
+            js_build: true,
+            manifest: true
         }
     }
 }
 
 impl BuildConfig {
     pub fn new(name: String, path: PathBuf, options: &BuildOptions) -> Result<BuildConfig, ()> {
-        let build_config_string = match std::fs::read_to_string(path.join(BUILD_CONFIG_FILE)) {
+        let config_file_file_name = match options.env {
+            Some(env) => format!("{}.{}", env, BUILD_CONFIG_FILE),
+            None => BUILD_CONFIG_FILE.to_string()
+        };
+        let build_config_string = match std::fs::read_to_string(path.join(config_file_file_name)) {
             Ok(string) => string,
             Err(_) => {
                 logger::log_error("Failed to read build config file");
@@ -73,6 +82,20 @@ impl BuildConfig {
                             }
                             Err(_) => continue
                         }
+                    }
+                }
+                false => ()
+            };
+        }
+
+        if options.manifest {
+            match build_config_object["manifest"].is_object() {
+                true => {
+                    match ManifestGenerationStep::new(&path, &build_config_object["manifest"]) {
+                        Ok(config) => {
+                            steps.push(Box::new(config));
+                        }
+                        Err(_) => {}
                     }
                 }
                 false => ()
