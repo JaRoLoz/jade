@@ -38,11 +38,15 @@ impl BuildConfig {
             Some(env) => format!("{}.{}", env, BUILD_CONFIG_FILE),
             None => BUILD_CONFIG_FILE.to_string()
         };
+
         let build_config_string = match std::fs::read_to_string(path.join(config_file_file_name)) {
             Ok(string) => string,
-            Err(_) => {
-                logger::log_error("Failed to read build config file");
-                return Err(());
+            Err(_) => match std::fs::read_to_string(path.join(BUILD_CONFIG_FILE)) {
+                Ok(string) => string,
+                Err(_) => {
+                    logger::log_error("Failed to read build config file");
+                    return Err(());
+                }
             }
         };
 

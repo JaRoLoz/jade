@@ -23,7 +23,7 @@ impl Builder {
                 .into_iter()
                 .any(|dir_entry| {
                     let entry_name: OsString = dir_entry.unwrap().file_name();
-                    entry_name.to_str().unwrap() == config_file_name
+                    entry_name.to_str().unwrap() == config_file_name || entry_name.to_str().unwrap() == BUILD_CONFIG_FILE
                 });
             if is_buildable {
                 let config = match BuildConfig::new(name, path, &options) {
