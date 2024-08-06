@@ -1,9 +1,9 @@
-use std::path::PathBuf;
-use crate::logger;
 use crate::builder::build_step::BuildStep;
 use crate::bundler::bundle_step::BundleStep;
 use crate::js_builder::JSBuildStep;
+use crate::logger;
 use crate::manifest_generator::ManifestGenerationStep;
+use std::path::PathBuf;
 
 pub const BUILD_CONFIG_FILE: &str = "jade.json";
 
@@ -11,14 +11,14 @@ pub struct BuildOptions<'a> {
     pub env: Option<&'a String>,
     pub bundle: bool,
     pub js_build: bool,
-    pub manifest: bool
+    pub manifest: bool,
 }
 
 #[derive(Debug)]
 pub struct BuildConfig {
     pub name: String,
     base_path: PathBuf,
-    steps: Vec<Box<dyn BuildStep>>
+    steps: Vec<Box<dyn BuildStep>>,
 }
 
 impl Default for BuildOptions<'_> {
@@ -27,7 +27,7 @@ impl Default for BuildOptions<'_> {
             env: None,
             bundle: true,
             js_build: true,
-            manifest: true
+            manifest: true,
         }
     }
 }
@@ -36,7 +36,7 @@ impl BuildConfig {
     pub fn new(name: String, path: PathBuf, options: &BuildOptions) -> Result<BuildConfig, ()> {
         let config_file_file_name = match options.env {
             Some(env) => format!("{}.{}", env, BUILD_CONFIG_FILE),
-            None => BUILD_CONFIG_FILE.to_string()
+            None => BUILD_CONFIG_FILE.to_string(),
         };
 
         let build_config_string = match std::fs::read_to_string(path.join(config_file_file_name)) {
@@ -47,7 +47,7 @@ impl BuildConfig {
                     logger::log_error("Failed to read build config file");
                     return Err(());
                 }
-            }
+            },
         };
 
         let build_config_object = match json::parse(build_config_string.as_str()) {
@@ -60,6 +60,22 @@ impl BuildConfig {
 
         let mut steps: Vec<Box<dyn BuildStep>> = Vec::new();
 
+        if options.js_build {
+            match build_config_object["js_build"].is_array() {
+                true => {
+                    for js_build in build_config_object["js_build"].members() {
+                        match JSBuildStep::new(&path, js_build) {
+                            Ok(config) => {
+                                steps.push(Box::new(config));
+                            }
+                            Err(_) => continue,
+                        }
+                    }
+                }
+                false => (),
+            };
+        }
+
         if options.bundle {
             match build_config_object["bundle"].is_array() {
                 true => {
@@ -68,27 +84,11 @@ impl BuildConfig {
                             Ok(config) => {
                                 steps.push(Box::new(config));
                             }
-                            Err(_) => continue
+                            Err(_) => continue,
                         }
                     }
                 }
-                false => ()
-            };
-        }
-
-        if options.js_build {
-            match build_config_object["js_build"].is_array() {
-                true => {
-                    for ui_build in build_config_object["js_build"].members() {
-                        match JSBuildStep::new(&path, ui_build) {
-                            Ok(config) => {
-                                steps.push(Box::new(config));
-                            }
-                            Err(_) => continue
-                        }
-                    }
-                }
-                false => ()
+                false => (),
             };
         }
 
@@ -102,7 +102,7 @@ impl BuildConfig {
                         Err(_) => {}
                     }
                 }
-                false => ()
+                false => (),
             };
         }
 
@@ -113,7 +113,7 @@ impl BuildConfig {
         Ok(BuildConfig {
             name,
             base_path: path,
-            steps
+            steps,
         })
     }
 
