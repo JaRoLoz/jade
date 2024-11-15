@@ -1,7 +1,7 @@
 use crate::{builder::build_step::BuildStep, logger};
-use std::path::PathBuf;
 use json::JsonValue;
 use std::io::Write;
+use std::path::PathBuf;
 
 const REQUIRED_MANIFEST_FIELDS: [&str; 2] = ["fx_version", "game"];
 
@@ -20,7 +20,8 @@ pub struct ManifestGenerationStep {
     loadscreen: Option<String>,
     ui_page: Option<String>,
     is_a_map: bool,
-    lua54: bool
+    lua54: bool,
+    rdr3_warning: Option<String>,
 }
 
 impl ManifestGenerationStep {
@@ -32,7 +33,9 @@ impl ManifestGenerationStep {
 
         for field in REQUIRED_MANIFEST_FIELDS.iter() {
             if !raw_json.has_key(field) || !raw_json[*field].is_string() {
-                logger::log_error(format!("├───• Missing field '{}' in manifest config", field).as_str());
+                logger::log_error(
+                    format!("├───• Missing field '{}' in manifest config", field).as_str(),
+                );
                 return Err(());
             }
         }
@@ -42,65 +45,85 @@ impl ManifestGenerationStep {
 
         let author = match raw_json["author"].as_str() {
             Some(author) => Some(author.to_string()),
-            None => None
+            None => None,
         };
 
         let description = match raw_json["description"].as_str() {
             Some(description) => Some(description.to_string()),
-            None => None
+            None => None,
         };
 
         let version = match raw_json["version"].as_str() {
             Some(version) => Some(version.to_string()),
-            None => None
+            None => None,
         };
 
         let client_scripts = match raw_json["client_scripts"].is_array() {
-            true => raw_json["client_scripts"].members().map(|script| script.to_string()).collect(),
-            false => Vec::new()
+            true => raw_json["client_scripts"]
+                .members()
+                .map(|script| script.to_string())
+                .collect(),
+            false => Vec::new(),
         };
 
         let server_scripts = match raw_json["server_scripts"].is_array() {
-            true => raw_json["server_scripts"].members().map(|script| script.to_string()).collect(),
-            false => Vec::new()
+            true => raw_json["server_scripts"]
+                .members()
+                .map(|script| script.to_string())
+                .collect(),
+            false => Vec::new(),
         };
 
         let shared_scripts = match raw_json["shared_scripts"].is_array() {
-            true => raw_json["shared_scripts"].members().map(|script| script.to_string()).collect(),
-            false => Vec::new()
+            true => raw_json["shared_scripts"]
+                .members()
+                .map(|script| script.to_string())
+                .collect(),
+            false => Vec::new(),
         };
 
         let dependencies = match raw_json["dependencies"].is_array() {
-            true => raw_json["dependencies"].members().map(|script| script.to_string()).collect(),
-            false => Vec::new()
+            true => raw_json["dependencies"]
+                .members()
+                .map(|script| script.to_string())
+                .collect(),
+            false => Vec::new(),
         };
 
         let files = match raw_json["files"].is_array() {
-            true => raw_json["files"].members().map(|script| script.to_string()).collect(),
-            false => Vec::new()
+            true => raw_json["files"]
+                .members()
+                .map(|script| script.to_string())
+                .collect(),
+            false => Vec::new(),
         };
 
         let loadscreen = match raw_json["loadscreen"].as_str() {
             Some(loadscreen) => Some(loadscreen.to_string()),
-            None => None
+            None => None,
         };
 
         let ui_page = match raw_json["ui_page"].as_str() {
             Some(ui_page) => Some(ui_page.to_string()),
-            None => None
+            None => None,
         };
 
         let is_a_map = match raw_json["is_a_map"].as_bool() {
             Some(is_a_map) => is_a_map,
-            None => false
+            None => false,
         };
 
         let lua54 = match raw_json["lua54"].as_bool() {
             Some(lua54) => lua54,
-            None => false
+            None => false,
         };
 
-        Ok(ManifestGenerationStep { 
+        let rdr3_warning = match raw_json["rdr3_warning"].as_str() {
+            Some(rdr3_warning) => Some(rdr3_warning.to_string()),
+            None => None,
+        };
+
+        Ok(ManifestGenerationStep {
             fx_version,
             game,
             author,
@@ -114,7 +137,8 @@ impl ManifestGenerationStep {
             loadscreen,
             ui_page,
             is_a_map,
-            lua54
+            lua54,
+            rdr3_warning,
         })
     }
 }
@@ -192,6 +216,10 @@ impl BuildStep for ManifestGenerationStep {
 
         if self.lua54 {
             writeln!(file, r#"lua54 "yes""#).unwrap();
+        }
+
+        if let Some(rdr3_warning) = &self.rdr3_warning {
+            writeln!(file, r#"rdr3_warning "{}""#, rdr3_warning).unwrap();
         }
 
         writeln!(file).unwrap();
