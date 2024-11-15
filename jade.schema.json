@@ -65,6 +65,9 @@
                 "author": {
                     "type": "string"
                 },
+                "rdr3_warning": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
