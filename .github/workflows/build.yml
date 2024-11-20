@@ -10,8 +10,7 @@ jobs:
   upload-release:
     name: Upload Release Asset
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    environment: ci
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
