@@ -1,0 +1,12 @@
+[package]
+name = "jade"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.1.8", features = ["cargo"] }
+colored = "2.1.0"
+dunce = "1.0.4"
+json = "0.12.4"
+regex = "1.10.5"
+relative-path = "1.9.3"

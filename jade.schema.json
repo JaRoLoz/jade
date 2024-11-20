@@ -1,0 +1,126 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Generated schema for Root",
+    "type": "object",
+    "properties": {
+        "js_build": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "folder": {
+                        "type": "string"
+                    },
+                    "package_manager": {
+                        "type": "string"
+                    },
+                    "build_script": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name",
+                    "folder"
+                ]
+            }
+        },
+        "bundle": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "output": {
+                        "type": "string"
+                    },
+                    "source_dir": {
+                        "type": "string"
+                    },
+                    "entrypoint": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name",
+                    "output",
+                    "source_dir",
+                    "entrypoint"
+                ]
+            }
+        },
+        "manifest": {
+            "type": "object",
+            "properties": {
+                "fx_version": {
+                    "type": "string"
+                },
+                "game": {
+                    "type": "string"
+                },
+                "author": {
+                    "type": "string"
+                },
+                "rdr3_warning": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                },
+                "client_scripts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "server_scripts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "shared_scripts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "dependencies": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "files": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ui_page": {
+                    "type": "string"
+                },
+                "loadscreen": {
+                    "type": "string"
+                },
+                "is_a_map": {
+                    "type": "boolean"
+                },
+                "lua54": {
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "fx_version",
+                "game"
+            ]
+        }
+    }
+}

@@ -1,0 +1,67 @@
+name: Upload Release Assets
+on:
+  push:
+    tags:
+    - 'v*'
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  upload-release:
+    name: Upload Release Asset
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      # by default only the linux target is installed
+      - name: Install windows target
+        run: |
+          sudo apt-get install -y mingw-w64
+          rustup target add x86_64-pc-windows-gnu
+
+      - name: Build jade
+        run: |
+          RUSTFLAGS=-Awarnings
+          cargo build --verbose --release
+          cargo build --verbose --release --target x86_64-pc-windows-gnu
+          zip jade_linux_x86_64.zip target/release/jade
+          zip jade_windows_x86_64.zip target/x86_64-pc-windows-gnu/release/jade.exe
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Linux Release
+        id: upload-release-linux 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./jade_linux_x86_64.zip
+          asset_name: jade_linux_x86_64.zip
+          asset_content_type: application/zip
+
+      - name: Upload Windows Release
+        id: upload-release-windows 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./jade_windows_x86_64.zip
+          asset_name: jade_windows_x86_64.zip
+          asset_content_type: application/zip
