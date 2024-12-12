@@ -3,7 +3,9 @@ use crate::bundler::bundle_step::BundleStep;
 use crate::js_builder::JSBuildStep;
 use crate::logger;
 use crate::manifest_generator::ManifestGenerationStep;
+use crate::parallel_builder::ParallelBuildStep;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 pub const BUILD_CONFIG_FILE: &str = "jade.json";
 
@@ -61,19 +63,35 @@ impl BuildConfig {
         let mut steps: Vec<Box<dyn BuildStep>> = Vec::new();
 
         if options.js_build {
-            match build_config_object["js_build"].is_array() {
-                true => {
-                    for js_build in build_config_object["js_build"].members() {
-                        match JSBuildStep::new(&path, js_build) {
-                            Ok(config) => {
-                                steps.push(Box::new(config));
-                            }
-                            Err(_) => continue,
+            fn parse(
+                member: &json::JsonValue,
+                path: &PathBuf,
+            ) -> Option<Box<dyn BuildStep + Send + Sync>> {
+                match JSBuildStep::new(&path, &member) {
+                    Ok(config) => Some(Box::new(config)),
+                    Err(_) => None,
+                }
+            }
+            let object = &build_config_object["js_build"];
+            if object.is_array() {
+                for member in object.members() {
+                    if member.is_array() {
+                        let js_steps: Vec<Arc<Box<dyn BuildStep + Send + Sync>>> = member
+                            .members()
+                            .filter_map(|m| match parse(m, &path) {
+                                Some(step) => Some(Arc::new(step)),
+                                None => None,
+                            })
+                            .collect();
+                        steps.push(Box::new(ParallelBuildStep { steps: js_steps }));
+                    } else {
+                        match parse(member, &path) {
+                            Some(step) => steps.push(step),
+                            None => (),
                         }
                     }
                 }
-                false => (),
-            };
+            }
         }
 
         if options.bundle {

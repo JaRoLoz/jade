@@ -12,6 +12,7 @@ pub struct JSBuildStep {
     package_manager: String,
     folder: PathBuf,
     build_script: String,
+    install_packages: bool,
 }
 
 impl JSBuildStep {
@@ -62,11 +63,17 @@ impl JSBuildStep {
             }
         };
 
+        let install_packages = match raw_json["install_packages"].as_bool() {
+            Some(install_packages) => install_packages,
+            None => true,
+        };
+
         Ok(JSBuildStep {
             name,
             package_manager,
             folder: base_path.join(folder),
             build_script: build_script,
+            install_packages,
         })
     }
 }
@@ -94,21 +101,24 @@ impl BuildStep for JSBuildStep {
                 return;
             }
         };
-        match Command::new(&self.package_manager)
-            .current_dir(&dir)
-            .arg("install")
-            .output()
-        {
-            Ok(_) => {}
-            Err(error) => {
-                logger::log_error(
-                    format!(
-                        "├───• Failed to install dependencies for '{}': {}",
-                        self.name, error
-                    )
-                    .as_str(),
-                );
-                return;
+
+        if self.install_packages {
+            match Command::new(&self.package_manager)
+                .current_dir(&dir)
+                .arg("install")
+                .output()
+            {
+                Ok(_) => {}
+                Err(error) => {
+                    logger::log_error(
+                        format!(
+                            "├───• Failed to install dependencies for '{}': {}",
+                            self.name, error
+                        )
+                        .as_str(),
+                    );
+                    return;
+                }
             }
         }
 
@@ -128,3 +138,6 @@ impl BuildStep for JSBuildStep {
         }
     }
 }
+
+unsafe impl Sync for JSBuildStep {}
+unsafe impl Send for JSBuildStep {}

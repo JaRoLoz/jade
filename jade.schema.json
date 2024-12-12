@@ -5,27 +5,61 @@
     "properties": {
         "js_build": {
             "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string"
+            "items": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "folder": {
+                            "type": "string"
+                        },
+                        "package_manager": {
+                            "type": "string"
+                        },
+                        "build_script": {
+                            "type": "string"
+                        },
+                        "install_packages": {
+                            "type": "boolean"
+                        }
                     },
-                    "folder": {
-                        "type": "string"
-                    },
-                    "package_manager": {
-                        "type": "string"
-                    },
-                    "build_script": {
-                        "type": "string"
-                    }
+                    "required": [
+                        "name",
+                        "folder"
+                    ]
                 },
-                "required": [
-                    "name",
-                    "folder"
-                ]
-            }
+                {
+                    "type": "array",
+                    "items": [
+                        {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "folder": {
+                                    "type": "string"
+                                },
+                                "package_manager": {
+                                    "type": "string"
+                                },
+                                "build_script": {
+                                    "type": "string"
+                                },
+                                "install_packages": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": [
+                                "name",
+                                "folder"
+                            ]
+                        }
+                    ]
+                }
+            ]
         },
         "bundle": {
             "type": "array",

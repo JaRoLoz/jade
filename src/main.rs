@@ -3,6 +3,7 @@ mod bundler;
 mod js_builder;
 mod logger;
 mod manifest_generator;
+mod parallel_builder;
 mod path_resolver;
 
 use builder::{build_config::BuildOptions, builder::Builder};
