@@ -18,7 +18,6 @@ use std::path::PathBuf;
 use std::process::exit;
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
-// use std::time::SystemTime;
 
 const ASCII_LOGO: &str = r#"
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -71,7 +70,7 @@ fn main() {
 
     let current_path = PathBuf::from(".").canonicalize().unwrap();
     let resources_path = find_resources_dir(&current_path);
-    if let None = resources_path {
+    if resources_path.is_none() && (resource.is_none() || resource.unwrap() != ".") {
         logger::log_error("Could not find resources directory!");
         exit(1);
     }
