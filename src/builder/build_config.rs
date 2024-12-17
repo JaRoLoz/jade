@@ -4,142 +4,303 @@ use crate::js_builder::JSBuildStep;
 use crate::logger;
 use crate::manifest_generator::ManifestGenerationStep;
 use crate::parallel_builder::ParallelBuildStep;
+use relative_path::RelativePathBuf;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-pub const BUILD_CONFIG_FILE: &str = "jade.json";
-
-pub struct BuildOptions<'a> {
-    pub env: Option<&'a String>,
-    pub bundle: bool,
-    pub js_build: bool,
-    pub manifest: bool,
-}
+pub const BUILD_CONFIG_FILE: &str = "jade.xml";
 
 #[derive(Debug)]
 pub struct BuildConfig {
     pub name: String,
-    base_path: PathBuf,
-    steps: Vec<Box<dyn BuildStep>>,
+    steps: Vec<Box<dyn BuildStep + Send + Sync>>,
 }
 
-impl Default for BuildOptions<'_> {
-    fn default() -> Self {
-        BuildOptions {
-            env: None,
-            bundle: true,
-            js_build: true,
-            manifest: true,
-        }
-    }
+fn parse_js_build(
+    node: &roxmltree::Node,
+    path: &PathBuf,
+    default_package_manager: &String,
+) -> Box<dyn BuildStep + Send + Sync> {
+    let name = node.attribute("name").unwrap();
+    let folder = node
+        .children()
+        .find(|n| n.tag_name().name() == "folder")
+        .unwrap()
+        .text()
+        .unwrap();
+    let build_script = node
+        .children()
+        .find(|n| n.tag_name().name() == "build_script")
+        .unwrap()
+        .text()
+        .unwrap();
+    let install_packages = match node
+        .children()
+        .find(|n| n.tag_name().name() == "install_packages")
+    {
+        None => true,
+        Some(n) => n.text().unwrap() == "true",
+    };
+    let package_manager = match node
+        .children()
+        .find(|n| n.tag_name().name() == "package_manager")
+    {
+        None => default_package_manager,
+        Some(n) => n.text().unwrap(),
+    };
+
+    Box::new(JSBuildStep {
+        name: name.to_string(),
+        build_script: build_script.to_string(),
+        package_manager: package_manager.to_string(),
+        install_packages,
+        folder: RelativePathBuf::from(folder)
+            .normalize()
+            .to_logical_path(path),
+    })
+}
+
+fn parse_bundle(node: &roxmltree::Node, path: &PathBuf) -> Box<dyn BuildStep + Send + Sync> {
+    let name = node.attribute("name").unwrap();
+    let entrypoint = node
+        .children()
+        .find(|n| n.tag_name().name() == "entrypoint")
+        .unwrap()
+        .text()
+        .unwrap();
+    let source_dir = node
+        .children()
+        .find(|n| n.tag_name().name() == "source_dir")
+        .unwrap()
+        .text()
+        .unwrap();
+    let output = node
+        .children()
+        .find(|n| n.tag_name().name() == "output")
+        .unwrap()
+        .text()
+        .unwrap();
+
+    Box::new(BundleStep {
+        name: name.to_string(),
+        entrypoint: RelativePathBuf::from(entrypoint)
+            .normalize()
+            .to_logical_path(path)
+            .with_extension("lua"),
+        source_dir: RelativePathBuf::from(source_dir)
+            .normalize()
+            .to_logical_path(path),
+        output: RelativePathBuf::from(output)
+            .normalize()
+            .to_logical_path(path)
+            .with_extension("lua"),
+    })
+}
+
+fn parse_manifest(node: &roxmltree::Node, path: &PathBuf) -> Box<dyn BuildStep + Send + Sync> {
+    Box::new(ManifestGenerationStep {
+        path: RelativePathBuf::from("./fxmanifest.lua")
+            .normalize()
+            .to_logical_path(path)
+            .with_extension("lua"),
+        fx_version: node
+            .children()
+            .find(|n| n.tag_name().name() == "fx_version")
+            .unwrap()
+            .text()
+            .unwrap()
+            .to_string(),
+        game: node
+            .children()
+            .find(|n| n.tag_name().name() == "game")
+            .unwrap()
+            .text()
+            .unwrap()
+            .to_string(),
+        author: match node.children().find(|n| n.tag_name().name() == "author") {
+            None => None,
+            Some(n) => Some(n.text().unwrap().to_string()),
+        },
+        description: match node
+            .children()
+            .find(|n| n.tag_name().name() == "description")
+        {
+            None => None,
+            Some(n) => Some(n.text().unwrap().to_string()),
+        },
+        version: match node.children().find(|n| n.tag_name().name() == "version") {
+            None => None,
+            Some(n) => Some(n.text().unwrap().to_string()),
+        },
+        client_scripts: match node
+            .children()
+            .find(|n| n.tag_name().name() == "client_scripts")
+        {
+            None => Vec::new(),
+            Some(n) => n
+                .children()
+                .filter(|n| n.tag_name().name() == "client_script")
+                .map(|n| n.text().unwrap().to_string())
+                .collect(),
+        },
+        server_scripts: match node
+            .children()
+            .find(|n| n.tag_name().name() == "server_scripts")
+        {
+            None => Vec::new(),
+            Some(n) => n
+                .children()
+                .filter(|n| n.tag_name().name() == "server_script")
+                .map(|n| n.text().unwrap().to_string())
+                .collect(),
+        },
+        shared_scripts: match node
+            .children()
+            .find(|n| n.tag_name().name() == "shared_scripts")
+        {
+            None => Vec::new(),
+            Some(n) => n
+                .children()
+                .filter(|n| n.tag_name().name() == "shared_script")
+                .map(|n| n.text().unwrap().to_string())
+                .collect(),
+        },
+        dependencies: match node
+            .children()
+            .find(|n| n.tag_name().name() == "dependencies")
+        {
+            None => Vec::new(),
+            Some(n) => n
+                .children()
+                .filter(|n| n.tag_name().name() == "dependency")
+                .map(|n| n.text().unwrap().to_string())
+                .collect(),
+        },
+        files: match node.children().find(|n| n.tag_name().name() == "files") {
+            None => Vec::new(),
+            Some(n) => n
+                .children()
+                .filter(|n| n.tag_name().name() == "file")
+                .map(|n| n.text().unwrap().to_string())
+                .collect(),
+        },
+        loadscreen: match node
+            .children()
+            .find(|n| n.tag_name().name() == "loadscreen")
+        {
+            None => None,
+            Some(n) => Some(n.text().unwrap().to_string()),
+        },
+        ui_page: match node.children().find(|n| n.tag_name().name() == "ui_page") {
+            None => None,
+            Some(n) => Some(n.text().unwrap().to_string()),
+        },
+        is_a_map: match node.children().find(|n| n.tag_name().name() == "is_a_map") {
+            None => false,
+            Some(n) => n.attribute("enable").unwrap() == "true",
+        },
+        lua54: match node.children().find(|n| n.tag_name().name() == "lua54") {
+            None => false,
+            Some(n) => n.attribute("enable").unwrap() == "true",
+        },
+        rdr3_warning: match node
+            .children()
+            .find(|n| n.tag_name().name() == "rdr3_warning")
+        {
+            None => None,
+            Some(n) => Some(n.text().unwrap().to_string()),
+        },
+    })
+}
+
+fn parse_steps(
+    root: &roxmltree::Node,
+    path: &PathBuf,
+    package_manager: &String,
+) -> Vec<Box<dyn BuildStep + Send + Sync>> {
+    root.children()
+        .filter_map(|node| match node.tag_name().name() {
+            "step" => match node.attribute("type") {
+                Some("js_build") => Some(parse_js_build(&node, path, package_manager)),
+                Some("bundle") => Some(parse_bundle(&node, path)),
+                Some("manifest") => Some(parse_manifest(&node, path)),
+                _ => None,
+            },
+            "parallel" => Some(Box::new(ParallelBuildStep {
+                steps: parse_steps(&node, path, package_manager)
+                    .into_iter()
+                    .map(|step| Arc::new(step))
+                    .collect(),
+            })),
+            _ => None,
+        })
+        .collect()
 }
 
 impl BuildConfig {
-    pub fn new(name: String, path: PathBuf, options: &BuildOptions) -> Result<BuildConfig, ()> {
-        let config_file_file_name = match options.env {
-            Some(env) => format!("{}.{}", env, BUILD_CONFIG_FILE),
-            None => BUILD_CONFIG_FILE.to_string(),
-        };
+    pub fn new(
+        name: String,
+        build_file_path: PathBuf,
+        package_manager: &String,
+    ) -> Result<BuildConfig, ()> {
+        let resource_path = PathBuf::from(build_file_path.parent().unwrap());
 
-        let build_config_string = match std::fs::read_to_string(path.join(config_file_file_name)) {
+        let build_config_string = match std::fs::read_to_string(&build_file_path) {
             Ok(string) => string,
-            Err(_) => match std::fs::read_to_string(path.join(BUILD_CONFIG_FILE)) {
+            Err(_) => match std::fs::read_to_string(resource_path.join(BUILD_CONFIG_FILE)) {
                 Ok(string) => string,
                 Err(_) => {
-                    logger::log_error("Failed to read build config file");
+                    logger::log_error(
+                        format!(
+                            "Failed to read build config file {}",
+                            build_file_path.display()
+                        )
+                        .as_str(),
+                    );
                     return Err(());
                 }
             },
         };
 
-        let build_config_object = match json::parse(build_config_string.as_str()) {
-            Ok(object) => object,
+        let build_config = match roxmltree::Document::parse(&build_config_string) {
+            Ok(config) => config,
             Err(_) => {
-                logger::log_error("Failed to parse build config file");
+                logger::log_error(
+                    format!(
+                        "Failed to parse build config file {}",
+                        build_file_path.display()
+                    )
+                    .as_str(),
+                );
                 return Err(());
             }
         };
 
-        let mut steps: Vec<Box<dyn BuildStep>> = Vec::new();
-
-        if options.js_build {
-            fn parse(
-                member: &json::JsonValue,
-                path: &PathBuf,
-            ) -> Option<Box<dyn BuildStep + Send + Sync>> {
-                match JSBuildStep::new(&path, &member) {
-                    Ok(config) => Some(Box::new(config)),
-                    Err(_) => None,
-                }
-            }
-            let object = &build_config_object["js_build"];
-            if object.is_array() {
-                for member in object.members() {
-                    if member.is_array() {
-                        let js_steps: Vec<Arc<Box<dyn BuildStep + Send + Sync>>> = member
-                            .members()
-                            .filter_map(|m| match parse(m, &path) {
-                                Some(step) => Some(Arc::new(step)),
-                                None => None,
-                            })
-                            .collect();
-                        steps.push(Box::new(ParallelBuildStep { steps: js_steps }));
-                    } else {
-                        match parse(member, &path) {
-                            Some(step) => steps.push(step),
-                            None => (),
-                        }
-                    }
-                }
-            }
-        }
-
-        if options.bundle {
-            match build_config_object["bundle"].is_array() {
-                true => {
-                    for bundle in build_config_object["bundle"].members() {
-                        match BundleStep::new(&path, bundle) {
-                            Ok(config) => {
-                                steps.push(Box::new(config));
-                            }
-                            Err(_) => continue,
-                        }
-                    }
-                }
-                false => (),
-            };
-        }
-
-        if options.manifest {
-            match build_config_object["manifest"].is_object() {
-                true => {
-                    match ManifestGenerationStep::new(&path, &build_config_object["manifest"]) {
-                        Ok(config) => {
-                            steps.push(Box::new(config));
-                        }
-                        Err(_) => {}
-                    }
-                }
-                false => (),
-            };
-        }
+        let steps: Vec<Box<dyn BuildStep + Send + Sync>> = parse_steps(
+            &build_config.root_element(),
+            &resource_path,
+            package_manager,
+        );
 
         if steps.is_empty() {
-            logger::log_warn(format!("'{}' does not contain any build steps!", name).as_str());
+            logger::log_warn(
+                format!("[{}] Build config does not contain any build steps!", name).as_str(),
+            );
         }
 
-        Ok(BuildConfig {
-            name,
-            base_path: path,
-            steps,
-        })
+        Ok(BuildConfig { name, steps })
     }
 
     pub fn build(&self) {
-        logger::log_info(format!("┌ Starting build for '{}'", self.name).as_str());
-        for step in &self.steps {
-            step.build(&self.base_path);
-        }
-        logger::log_success(format!("└ Successfully built resource '{}'!\n", self.name).as_str());
+        let start_time = std::time::Instant::now();
+        logger::log_info(format!("[{}] Starting build", &self.name).as_str());
+        let _ = &self.steps.iter().for_each(|step| step.build(&self.name));
+        let duration = start_time.elapsed().as_secs_f64();
+        logger::log_success(
+            format!("[{}] Built successfully in {:.2}s", &self.name, duration).as_str(),
+        );
     }
 }
+
+unsafe impl Send for BuildConfig {}
+unsafe impl Sync for BuildConfig {}

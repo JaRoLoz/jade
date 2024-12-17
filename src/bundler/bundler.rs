@@ -22,8 +22,7 @@ struct DependencyNode {
     path: PathBuf,
 }
 
-pub struct Bundler<'a> {
-    config: &'a BundleStep,
+pub struct Bundler {
     main_node: Option<DependencyNode>,
     modules: HashMap<String, DependencyNode>,
 }
@@ -69,19 +68,18 @@ impl DependencyNode {
     }
 }
 
-impl<'a> Bundler<'a> {
+impl Bundler {
     pub fn new(config: &BundleStep) -> Bundler {
-        Bundler {
-            config,
+        let mut bundler = Bundler {
             main_node: None,
             modules: HashMap::new(),
-        }
-    }
+        };
 
-    pub fn bundle(&mut self, base_path: &PathBuf) {
-        let main_node = DependencyNode::new(self.config.entrypoint.clone());
-        main_node.scan_dependencies(&self.config.source_dir, &mut self.modules);
-        self.main_node = Some(main_node);
+        let main_node = DependencyNode::new(config.entrypoint.clone());
+        main_node.scan_dependencies(&config.source_dir, &mut bundler.modules);
+        bundler.main_node = Some(main_node);
+
+        bundler
     }
 
     pub fn write_bundle(&self, out_file: &mut File) {

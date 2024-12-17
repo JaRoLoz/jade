@@ -1,6 +1,6 @@
 use std::fmt::Debug;
-use std::path::PathBuf;
 
 pub trait BuildStep: Debug {
-    fn build(&self, base_path: &PathBuf);
+    // the resource_name is only passed for logging purposes
+    fn build(&self, resource_name: &String);
 }

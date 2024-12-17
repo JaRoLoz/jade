@@ -1,6 +1,6 @@
 # Jade
 Jade is an opinionated build system designed for the Cfx.re plattform.
-Jade makes use of a `jade.json` config file inside each resource folder in order to *build it*. Its current features are:
+Jade makes use of a `jade.xml` config file inside each resource folder in order to *build it*. Its current features are:
 
 - Lua bundling
 - JS building through a package manager (e.g. npm, pnpm, yarn, bun...)
