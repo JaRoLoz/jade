@@ -220,12 +220,9 @@ fn parse_steps(
 ) -> Vec<Box<dyn BuildStep + Send + Sync>> {
     root.children()
         .filter_map(|node| match node.tag_name().name() {
-            "step" => match node.attribute("type") {
-                Some("js_build") => Some(parse_js_build(&node, path, package_manager)),
-                Some("bundle") => Some(parse_bundle(&node, path)),
-                Some("manifest") => Some(parse_manifest(&node, path)),
-                _ => None,
-            },
+            "js_build" => Some(parse_js_build(&node, path, package_manager)),
+            "bundle" => Some(parse_bundle(&node, path)),
+            "manifest" => Some(parse_manifest(&node, path)),
             "parallel" => Some(Box::new(ParallelBuildStep {
                 steps: parse_steps(&node, path, package_manager)
                     .into_iter()

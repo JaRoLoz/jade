@@ -1,118 +1,104 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
-    <xs:element name="step">
+    <xs:element name="js_build">
         <xs:complexType>
-            <xs:choice>
-                <xs:element name="js_build">
+            <xs:all>
+                <xs:element name="folder" type="xs:string" minOccurs="1" maxOccurs="1" />
+                <xs:element name="build_script" type="xs:string" minOccurs="1"
+                    maxOccurs="1" />
+                <xs:element name="package_manager" type="xs:string" minOccurs="0"
+                    maxOccurs="1" />
+                <xs:element name="install_packages" type="xs:boolean" minOccurs="0"
+                    maxOccurs="1" />
+            </xs:all>
+            <xs:attribute name="name" type="xs:string" use="required" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="bundle">
+        <xs:complexType>
+            <xs:all>
+                <xs:element name="output" type="xs:string" minOccurs="1" maxOccurs="1" />
+                <xs:element name="source_dir" type="xs:string" minOccurs="1"
+                    maxOccurs="1" />
+                <xs:element name="entrypoint" type="xs:string" minOccurs="1"
+                    maxOccurs="1" />
+            </xs:all>
+            <xs:attribute name="name" type="xs:string" use="required" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="manifest">
+        <xs:complexType>
+            <xs:all>
+                <xs:element name="fx_version" type="xs:string" minOccurs="1"
+                    maxOccurs="1" />
+                <xs:element name="game" type="xs:string" minOccurs="1" maxOccurs="1" />
+                <xs:element name="author" type="xs:string" minOccurs="0" maxOccurs="1" />
+                <xs:element name="description" type="xs:string" minOccurs="0"
+                    maxOccurs="1" />
+                <xs:element name="version" type="xs:string" minOccurs="0" maxOccurs="1" />
+                <xs:element name="rdr3_warning" type="xs:string" minOccurs="0"
+                    maxOccurs="1" />
+                <xs:element name="loadscreen" type="xs:string" minOccurs="0"
+                    maxOccurs="1" />
+                <xs:element name="ui_page" type="xs:string" minOccurs="0" maxOccurs="1" />
+                <xs:element name="client_scripts" minOccurs="0" maxOccurs="1">
                     <xs:complexType>
-                        <xs:all>
-                            <xs:element name="folder" type="xs:string" minOccurs="1" maxOccurs="1" />
-                            <xs:element name="build_script" type="xs:string" minOccurs="1"
-                                maxOccurs="1" />
-                            <xs:element name="package_manager" type="xs:string" minOccurs="0"
-                                maxOccurs="1" />
-                            <xs:element name="install_packages" type="xs:boolean" minOccurs="0"
-                                maxOccurs="1" />
-                        </xs:all>
+                        <xs:sequence>
+                            <xs:element name="client_script" type="xs:string"
+                                minOccurs="0"
+                                maxOccurs="unbounded" />
+                        </xs:sequence>
                     </xs:complexType>
                 </xs:element>
-
-                <xs:element name="bundle">
+                <xs:element name="server_scripts" minOccurs="0" maxOccurs="1">
                     <xs:complexType>
-                        <xs:all>
-                            <xs:element name="output" type="xs:string" minOccurs="1" maxOccurs="1" />
-                            <xs:element name="source_dir" type="xs:string" minOccurs="1"
-                                maxOccurs="1" />
-                            <xs:element name="entrypoint" type="xs:string" minOccurs="1"
-                                maxOccurs="1" />
-                        </xs:all>
+                        <xs:sequence>
+                            <xs:element name="server_script" type="xs:string"
+                                minOccurs="0"
+                                maxOccurs="unbounded" />
+                        </xs:sequence>
                     </xs:complexType>
                 </xs:element>
-
-                <xs:element name="manifest">
+                <xs:element name="shared_scripts" minOccurs="0" maxOccurs="1">
                     <xs:complexType>
-                        <xs:all>
-                            <xs:element name="fx_version" type="xs:string" minOccurs="1"
-                                maxOccurs="1" />
-                            <xs:element name="game" type="xs:string" minOccurs="1" maxOccurs="1" />
-                            <xs:element name="author" type="xs:string" minOccurs="0" maxOccurs="1" />
-                            <xs:element name="description" type="xs:string" minOccurs="0"
-                                maxOccurs="1" />
-                            <xs:element name="version" type="xs:string" minOccurs="0" maxOccurs="1" />
-                            <xs:element name="rdr3_warning" type="xs:string" minOccurs="0"
-                                maxOccurs="1" />
-                            <xs:element name="loadscreen" type="xs:string" minOccurs="0"
-                                maxOccurs="1" />
-                            <xs:element name="ui_page" type="xs:string" minOccurs="0" maxOccurs="1" />
-                            <xs:element name="client_scripts" minOccurs="0" maxOccurs="1">
-                                <xs:complexType>
-                                    <xs:sequence>
-                                        <xs:element name="client_script" type="xs:string"
-                                            minOccurs="0"
-                                            maxOccurs="unbounded" />
-                                    </xs:sequence>
-                                </xs:complexType>
-                            </xs:element>
-                            <xs:element name="server_scripts" minOccurs="0" maxOccurs="1">
-                                <xs:complexType>
-                                    <xs:sequence>
-                                        <xs:element name="server_script" type="xs:string"
-                                            minOccurs="0"
-                                            maxOccurs="unbounded" />
-                                    </xs:sequence>
-                                </xs:complexType>
-                            </xs:element>
-                            <xs:element name="shared_scripts" minOccurs="0" maxOccurs="1">
-                                <xs:complexType>
-                                    <xs:sequence>
-                                        <xs:element name="shared_script" type="xs:string"
-                                            minOccurs="0"
-                                            maxOccurs="unbounded" />
-                                    </xs:sequence>
-                                </xs:complexType>
-                            </xs:element>
-                            <xs:element name="files" minOccurs="0" maxOccurs="1">
-                                <xs:complexType>
-                                    <xs:sequence>
-                                        <xs:element name="file" type="xs:string"
-                                            minOccurs="0"
-                                            maxOccurs="unbounded" />
-                                    </xs:sequence>
-                                </xs:complexType>
-                            </xs:element>
-                            <xs:element name="dependencies" minOccurs="0" maxOccurs="1">
-                                <xs:complexType>
-                                    <xs:sequence>
-                                        <xs:element name="dependency" type="xs:string"
-                                            minOccurs="0"
-                                            maxOccurs="unbounded" />
-                                    </xs:sequence>
-                                </xs:complexType>
-                            </xs:element>
-                            <xs:element name="lua54" minOccurs="0" maxOccurs="1">
-                                <xs:complexType>
-                                    <xs:attribute name="enable" type="xs:boolean" use="required" />
-                                </xs:complexType>
-                            </xs:element>
-                            <xs:element name="is_a_map" minOccurs="0" maxOccurs="1">
-                                <xs:complexType>
-                                    <xs:attribute name="enable" type="xs:boolean" use="required" />
-                                </xs:complexType>
-                            </xs:element>
-                        </xs:all>
+                        <xs:sequence>
+                            <xs:element name="shared_script" type="xs:string"
+                                minOccurs="0"
+                                maxOccurs="unbounded" />
+                        </xs:sequence>
                     </xs:complexType>
                 </xs:element>
-            </xs:choice>
-
-            <xs:attribute name="type" use="required">
-                <xs:simpleType>
-                    <xs:restriction base="xs:string">
-                        <xs:enumeration value="js_build" />
-                        <xs:enumeration value="bundle" />
-                        <xs:enumeration value="manifest" />
-                    </xs:restriction>
-                </xs:simpleType>
-            </xs:attribute>
+                <xs:element name="files" minOccurs="0" maxOccurs="1">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="file" type="xs:string"
+                                minOccurs="0"
+                                maxOccurs="unbounded" />
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="dependencies" minOccurs="0" maxOccurs="1">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="dependency" type="xs:string"
+                                minOccurs="0"
+                                maxOccurs="unbounded" />
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="lua54" minOccurs="0" maxOccurs="1">
+                    <xs:complexType>
+                        <xs:attribute name="enable" type="xs:boolean" use="required" />
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="is_a_map" minOccurs="0" maxOccurs="1">
+                    <xs:complexType>
+                        <xs:attribute name="enable" type="xs:boolean" use="required" />
+                    </xs:complexType>
+                </xs:element>
+            </xs:all>
             <xs:attribute name="name" type="xs:string" use="required" />
         </xs:complexType>
     </xs:element>
@@ -121,7 +107,9 @@
         <xs:complexType>
             <xs:sequence>
                 <xs:choice maxOccurs="unbounded">
-                    <xs:element ref="step" />
+                    <xs:element ref="js_build" />
+                    <xs:element ref="bundle" />
+                    <xs:element ref="manifest" />
                     <xs:element ref="parallel" />
                 </xs:choice>
             </xs:sequence>
@@ -132,7 +120,9 @@
         <xs:complexType>
             <xs:sequence>
                 <xs:choice maxOccurs="unbounded">
-                    <xs:element ref="step" />
+                    <xs:element ref="js_build" />
+                    <xs:element ref="bundle" />
+                    <xs:element ref="manifest" />
                     <xs:element ref="parallel" />
                 </xs:choice>
             </xs:sequence>
