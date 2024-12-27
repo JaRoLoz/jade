@@ -72,6 +72,3 @@ impl BuildStep for JSBuildStep {
         }
     }
 }
-
-unsafe impl Sync for JSBuildStep {}
-unsafe impl Send for JSBuildStep {}

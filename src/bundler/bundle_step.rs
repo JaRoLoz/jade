@@ -24,6 +24,3 @@ impl BuildStep for BundleStep {
         bundler.write_bundle(&mut out_file);
     }
 }
-
-unsafe impl Sync for BundleStep {}
-unsafe impl Send for BundleStep {}

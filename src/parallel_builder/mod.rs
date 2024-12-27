@@ -6,7 +6,7 @@ use std::{
 
 #[derive(Debug)]
 pub struct ParallelBuildStep {
-    pub steps: Vec<Arc<Box<dyn BuildStep + Send + Sync>>>,
+    pub steps: Vec<Arc<Box<dyn BuildStep>>>,
 }
 
 impl BuildStep for ParallelBuildStep {

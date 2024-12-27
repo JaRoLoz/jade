@@ -105,6 +105,3 @@ impl BuildStep for ManifestGenerationStep {
         writeln!(file).unwrap();
     }
 }
-
-unsafe impl Sync for ManifestGenerationStep {}
-unsafe impl Send for ManifestGenerationStep {}

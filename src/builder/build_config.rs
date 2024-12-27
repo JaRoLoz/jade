@@ -13,14 +13,14 @@ pub const BUILD_CONFIG_FILE: &str = "jade.xml";
 #[derive(Debug)]
 pub struct BuildConfig {
     pub name: String,
-    steps: Vec<Box<dyn BuildStep + Send + Sync>>,
+    steps: Vec<Box<dyn BuildStep>>,
 }
 
 fn parse_js_build(
     node: &roxmltree::Node,
     path: &PathBuf,
     default_package_manager: &String,
-) -> Box<dyn BuildStep + Send + Sync> {
+) -> Box<dyn BuildStep> {
     let name = node.attribute("name").unwrap();
     let folder = node
         .children()
@@ -60,7 +60,7 @@ fn parse_js_build(
     })
 }
 
-fn parse_bundle(node: &roxmltree::Node, path: &PathBuf) -> Box<dyn BuildStep + Send + Sync> {
+fn parse_bundle(node: &roxmltree::Node, path: &PathBuf) -> Box<dyn BuildStep> {
     let name = node.attribute("name").unwrap();
     let entrypoint = node
         .children()
@@ -97,7 +97,7 @@ fn parse_bundle(node: &roxmltree::Node, path: &PathBuf) -> Box<dyn BuildStep + S
     })
 }
 
-fn parse_manifest(node: &roxmltree::Node, path: &PathBuf) -> Box<dyn BuildStep + Send + Sync> {
+fn parse_manifest(node: &roxmltree::Node, path: &PathBuf) -> Box<dyn BuildStep> {
     Box::new(ManifestGenerationStep {
         path: RelativePathBuf::from("./fxmanifest.lua")
             .normalize()
@@ -217,7 +217,7 @@ fn parse_steps(
     root: &roxmltree::Node,
     path: &PathBuf,
     package_manager: &String,
-) -> Vec<Box<dyn BuildStep + Send + Sync>> {
+) -> Vec<Box<dyn BuildStep>> {
     root.children()
         .filter_map(|node| match node.tag_name().name() {
             "js_build" => Some(parse_js_build(&node, path, package_manager)),
@@ -273,7 +273,7 @@ impl BuildConfig {
             }
         };
 
-        let steps: Vec<Box<dyn BuildStep + Send + Sync>> = parse_steps(
+        let steps: Vec<Box<dyn BuildStep>> = parse_steps(
             &build_config.root_element(),
             &resource_path,
             package_manager,
